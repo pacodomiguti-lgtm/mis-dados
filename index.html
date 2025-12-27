@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Prototipo Dados - Corregido</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #2c3e50; color: white; margin: 0; text-align: center; }
+        #menu-inicio { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .btn-grande { padding: 20px 40px; font-size: 24px; background: #27ae60; color: white; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; }
+        input[type="number"] { padding: 15px; font-size: 20px; width: 80px; border-radius: 10px; margin: 10px; text-align: center; border: none; }
+        #pantalla-juego { display: none; padding: 10px; }
+        .zona-lanzamiento { min-height: 100px; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 10px; border: 1px dashed rgba(255,255,255,0.2); border-radius: 15px; }
+        .tablero { display: flex; gap: 8px; height: 50vh; }
+        .columna { flex: 1; border-radius: 12px; display: flex; flex-direction: column; background: rgba(0,0,0,0.2); overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+        .col-mov { border-color: #3498db; }
+        .col-acc { border-color: #e74c3c; }
+        .col-res { border-color: #f1c40f; }
+        .titulo-col { padding: 8px 2px; margin: 0; font-size: 11px; font-weight: bold; color: white; }
+        .bg-mov { background: #3498db; }
+        .bg-acc { background: #e74c3c; }
+        .bg-res { background: #f1c40f; color: #2c3e50; }
+        .lista { display: flex; flex-direction: column; align-items: center; padding: 10px; gap: 10px; overflow-y: auto; }
+        .dado-wrapper { display: flex; flex-direction: column; align-items: center; }
+        .dado { width: 50px; height: 50px; background: white; color: #333; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; border-radius: 10px; }
+        .controles-dado { display: flex; gap: 3px; margin-top: 5px; }
+        .btn-asig { padding: 6px 4px; font-size: 9px; border: none; border-radius: 4px; color: white; font-weight: bold; cursor: pointer; }
+        .asig-mov { background: #3498db; }
+        .asig-acc { background: #e74c3c; }
+        .asig-res { background: #f1c40f; color: #2c3e50; }
+        .btn-reset { margin-top: 20px; padding: 12px 20px; background: #e67e22; border: none; color: white; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .info-reserva { color: #f1c40f; height: 20px; margin-bottom: 5px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div id="menu-inicio">
+        <h1>Dados del Prototipo</h1>
+        <div id="texto-estado" class="info-reserva"></div>
+        <p>Dados totales a usar:</p>
+        <input type="number" id="input-total" value="3" min="1" max="15">
+        <button class="btn-grande" onclick="lanzar()">LANZAR</button>
+    </div>
+
+    <div id="pantalla-juego">
+        <div id="zona-lanzamiento" class="zona-lanzamiento"></div>
+        <div class="tablero">
+            <div class="columna col-mov" id="dest-mov">
+                <h4 class="titulo-col bg-mov">MOVIMIENTO</h4>
+                <div class="lista"></div>
+            </div>
+            <div class="columna col-acc" id="dest-acc">
+                <h4 class="titulo-col bg-acc">ACCIÓN</h4>
+                <div class="lista"></div>
+            </div>
+            <div class="columna col-res" id="dest-res">
+                <h4 class="titulo-col bg-res">RESERVA</h4>
+                <div class="lista"></div>
+            </div>
+        </div>
+        <button class="btn-reset" onclick="irAlMenu()">Nuevo Turno (Mantiene Reserva)</button>
+    </div>
+
+    <script>
+        function lanzar() {
+            const totalDeseado = parseInt(document.getElementById('input-total').value) || 0;
+            const enReserva = document.querySelectorAll('#dest-res .lista .dado-wrapper').length;
+            
+            // Calculamos cuántos nuevos hay que crear
+            let paraLanzar = totalDeseado - enReserva;
+
+            if (paraLanzar <= 0) {
+                alert("Ya tienes " + enReserva + " dados en reserva. Elige un número mayor a ese para lanzar nuevos dados.");
+                return;
+            }
+
+            // Cambiar de pantalla
+            document.getElementById('menu-inicio').style.display = 'none';
+            document.getElementById('pantalla-juego').style.display = 'block';
+            
+            const zona = document.getElementById('zona-lanzamiento');
+            zona.innerHTML = ''; // Limpiar lanzamientos anteriores
+
+            for (let i = 0; i < paraLanzar; i++) {
+                const valor = Math.floor(Math.random() * 6) + 1;
+                const wrapper = document.createElement('div');
+                wrapper.className = 'dado-wrapper';
+                wrapper.innerHTML = `
+                    <div class="dado">${valor}</div>
+                    <div class="controles-dado">
+                        <button class="btn-asig asig-mov" onclick="asignar(this, 'mov')">MOV</button>
+                        <button class="btn-asig asig-acc" onclick="asignar(this, 'acc')">ACC</button>
+                        <button class="btn-asig asig-res" onclick="asignar(this, 'res')">RES</button>
+                    </div>`;
+                zona.appendChild(wrapper);
+            }
+        }
+
+        function asignar(btn, cat) {
+            const wrapper = btn.parentElement.parentElement;
+            const dado = wrapper.querySelector('.dado');
+            wrapper.querySelector('.controles-dado').remove();
+            
+            const colores = { mov: '#3498db', acc: '#e74c3c', res: '#f1c40f' };
+            dado.style.backgroundColor = colores[cat];
+            dado.style.color = (cat === 'res') ? '#2c3e50' : 'white';
+
+            document.querySelector(`#dest-${cat} .lista`).appendChild(wrapper);
+        }
+
+        function irAlMenu() {
+            // Limpiar todo menos reserva
+            document.querySelector('#dest-mov .lista').innerHTML = '';
+            document.querySelector('#dest-acc .lista').innerHTML = '';
+            document.getElementById('zona-lanzamiento').innerHTML = '';
+
+            document.getElementById('pantalla-juego').style.display = 'none';
+            document.getElementById('menu-inicio').style.display = 'flex';
+
+            // Actualizar mensaje informativo
+            const reservados = document.querySelectorAll('#dest-res .lista .dado-wrapper').length;
+            document.getElementById('texto-estado').innerText = reservados > 0 ? 
+                "Tienes " + reservados + " dados guardados en Reserva" : "";
+        }
+    </script>
+</body>
+</html>
